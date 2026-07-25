@@ -1,0 +1,104 @@
+:root {
+  /* Pure Monochrome Dark Mode Default Theme */
+  --bg-dark-base: #09090b;
+  --bg-dark-surface: #18181b;
+  --bg-glass-card: rgba(24, 24, 27, 0.85);
+  --border-glass: rgba(255, 255, 255, 0.12);
+  --primary-accent: #ffffff;
+  --primary-gradient: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+  --success-accent: #a1a1aa;
+  --warning-accent: #d4d4d8;
+  --danger-accent: #ef4444;
+  --text-main: #fafafa;
+  --text-muted: #a1a1aa;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Pure Monochrome Light Mode Theme Overrides */
+body.light-mode {
+  --bg-dark-base: #fafafa;
+  --bg-dark-surface: #ffffff;
+  --bg-glass-card: rgba(255, 255, 255, 0.95);
+  --border-glass: rgba(0, 0, 0, 0.12);
+  --primary-accent: #09090b;
+  --primary-gradient: linear-gradient(135deg, #09090b 0%, #3f3f46 100%);
+  --text-main: #09090b;
+  --text-muted: #71717a;
+  background-image: none;
+  background-color: #f4f4f5;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-dark-base);
+  color: var(--text-main);
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background-color 0.25s, color 0.25s;
+}
+
+/* Glassmorphism card */
+.glass-card {
+  background: var(--bg-glass-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.glass-card-hover {
+  transition: all 0.2s ease;
+}
+.glass-card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.light-mode .glass-card-hover:hover {
+  border-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(161, 161, 170, 0.3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(161, 161, 170, 0.6);
+}
+
+/* Monochrome Badges */
+.badge-urgent {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text-main);
+  border: 1px solid var(--border-glass);
+  font-weight: 700;
+}
+.badge-high {
+  background: rgba(161, 161, 170, 0.15);
+  color: var(--text-main);
+  border: 1px solid var(--border-glass);
+}
+.badge-medium {
+  background: rgba(113, 113, 122, 0.15);
+  color: var(--text-muted);
+  border: 1px solid var(--border-glass);
+}
+.badge-low {
+  background: rgba(63, 63, 70, 0.15);
+  color: var(--text-muted);
+  border: 1px solid var(--border-glass);
+}

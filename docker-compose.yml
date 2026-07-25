@@ -1,26 +1,40 @@
-version: '3.8'
-
 services:
+  # ElysiaJS + Bun + SQLite Backend Service
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: axpo-backend
+    restart: always
     ports:
       - "3001:3001"
     environment:
+      - JWT_SECRET=axpo-production-super-secret-key-2026
       - PORT=3001
-      - JWT_SECRET=axpo-secret-2026-key
     volumes:
-      - backend-data:/app
+      - sqlite_data:/app/data
+      - uploads_data:/app/uploads
+    networks:
+      - axpo-network
 
+  # Vue 3 + Naive UI + Nginx Frontend Service
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: axpo-frontend
+    restart: always
     ports:
       - "3000:80"
     depends_on:
       - backend
+    networks:
+      - axpo-network
 
 volumes:
-  backend-data:
+  sqlite_data:
+  uploads_data:
+
+networks:
+  axpo-network:
+    driver: bridge

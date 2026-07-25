@@ -16,12 +16,12 @@
 
     /* Linting */
     "strict": true,
+    "ignoreDeprecations": "5.0",
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "exclude": ["node_modules", "dist", "src/__tests__"],

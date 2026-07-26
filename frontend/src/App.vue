@@ -16,7 +16,7 @@
                 <div class="nav-left">
                   <router-link to="/" class="brand">
                     <div class="logo-icon">⚡</div>
-                    <span class="brand-name">AXPO <span class="brand-badge">2026</span></span>
+                    <span class="brand-name">AXPO</span>
                   </router-link>
 
                   <!-- Navigation Tabs -->

@@ -1,20 +1,7 @@
 <template>
   <div class="project-detail-page">
-    <!-- Header Section (Minimalist & Compact) -->
+    <!-- Header Section (Ultra-Compact Navigation Tabs) -->
     <div class="project-header glass-card">
-      <div class="header-main">
-        <div class="title-row">
-          <n-tag v-if="project" size="small" round :bordered="false" class="code-badge">
-            {{ project.code }}
-          </n-tag>
-          <n-tag v-else size="small" round :bordered="false" class="code-badge">
-            ALL
-          </n-tag>
-          <h1>{{ isAllProjects ? '🌐 所有專案議題與總覽' : project?.name }}</h1>
-        </div>
-      </div>
-
-      <!-- Navigation Tabs -->
       <div class="tab-buttons">
         <n-button
           size="small"
@@ -276,7 +263,6 @@
                   <span v-if="isAllProjects" class="project-tag">[{{ issue.project_code }}]</span>
                   {{ issue.title }}
                 </div>
-                <div class="issue-desc-sub">{{ issue.description || '無詳細描述' }}</div>
               </div>
               <div class="col-status" @click.stop>
                 <n-select
@@ -1230,10 +1216,10 @@ onMounted(() => {
 }
 
 .project-header {
-  padding: 18px 24px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .header-main {
@@ -1421,7 +1407,7 @@ h1 {
 .table-row {
   display: flex;
   align-items: center;
-  padding: 14px 16px;
+  padding: 10px 16px;
   border-radius: 8px;
   border: 1px solid var(--border-glass);
   background: rgba(161, 161, 170, 0.03);

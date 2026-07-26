@@ -86,12 +86,6 @@
                   {{ issue.title }}
                 </span>
               </div>
-              <div class="task-meta">
-                <span class="priority-badge" :class="'badge-' + issue.priority">
-                  {{ priorityText(issue.priority) }}
-                </span>
-                <span class="assignee-text">👤 {{ issue.assignee_name || '未指派' }}</span>
-              </div>
             </div>
 
             <!-- Right Timeline Grid & Start/Due Bar -->
@@ -171,9 +165,11 @@
 import { ref, onMounted, computed } from 'vue'
 import { NSpin, NSelect, NModal, NForm, NFormItem, NInput, NDatePicker, NButton, useMessage } from 'naive-ui'
 import axios from 'axios'
+import { useAuthStore } from '../stores/auth'
 import { useProjectStore } from '../stores/project'
 
 const message = useMessage()
+const authStore = useAuthStore()
 const projectStore = useProjectStore()
 
 const loading = ref(true)
@@ -397,7 +393,9 @@ async function fetchIssues() {
       issues.value = res.data.issues
     }
   } catch (err) {
-    message.error('載入議題時程失敗')
+    if (authStore.isAuthenticated) {
+      message.error('載入議題時程失敗')
+    }
   } finally {
     loading.value = false
   }

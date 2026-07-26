@@ -3,7 +3,6 @@
     <div class="header-section">
       <div>
         <h1>所有專案列表</h1>
-        <p class="subtitle">選擇專案檢視詳細議題、會議記錄與檔案庫</p>
       </div>
 
       <n-button v-if="authStore.isAdmin" type="primary" size="large" class="create-btn" @click="showCreateModal = true">
@@ -84,7 +83,9 @@ const newProjectForm = ref({
 })
 
 onMounted(() => {
-  projectStore.fetchProjects()
+  if (authStore.isAuthenticated && !authStore.isLoggingOut) {
+    projectStore.fetchProjects()
+  }
 })
 
 function selectProject(p: Project) {

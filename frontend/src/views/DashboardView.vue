@@ -281,6 +281,7 @@ function priorityText(p: string) {
 }
 
 async function fetchMyDayData() {
+  if (!authStore.isAuthenticated || authStore.isLoggingOut) return
   loading.value = true
   try {
     const res = await axios.get('/api/dashboard/my-day')
@@ -289,7 +290,9 @@ async function fetchMyDayData() {
       myTasks.value = res.data.data.myTasks
     }
   } catch (err) {
-    message.error('載入儀表板資料失敗')
+    if (authStore.isAuthenticated && !authStore.isLoggingOut) {
+      message.error('載入儀表板資料失敗')
+    }
   } finally {
     loading.value = false
   }

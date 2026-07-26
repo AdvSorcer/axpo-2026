@@ -818,7 +818,9 @@ async function loadProjectDetails() {
       loadMeetings()
     }
   } catch (err) {
-    message.error('載入專案資料失敗')
+    if (authStore.isAuthenticated) {
+      message.error('載入專案資料失敗')
+    }
   } finally {
     loading.value = false
   }

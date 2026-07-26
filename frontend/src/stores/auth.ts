@@ -14,8 +14,9 @@ export interface User {
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(JSON.parse(localStorage.getItem('axpo_user') || 'null'))
   const token = ref<string | null>(localStorage.getItem('axpo_token'))
+  const isLoggingOut = ref(false)
 
-  const isAuthenticated = computed(() => !!token.value && !!user.value)
+  const isAuthenticated = computed(() => !!token.value && !!user.value && !isLoggingOut.value)
   const isAdmin = computed(() => user.value?.role === 'admin')
 
   // Configure default axios header
@@ -23,7 +24,23 @@ export const useAuthStore = defineStore('auth', () => {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
   }
 
+  // Global 401 Interceptor: Silence errors completely if logging out or unauthenticated
+  axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response && error.response.status === 401) {
+        token.value = null
+        user.value = null
+        localStorage.removeItem('axpo_token')
+        localStorage.removeItem('axpo_user')
+        delete axios.defaults.headers.common['Authorization']
+      }
+      return Promise.reject(error)
+    }
+  )
+
   async function login(username: string, password_hash: string) {
+    isLoggingOut.value = false
     const res = await axios.post('/api/auth/login', { username, password: password_hash })
     if (res.data.success) {
       token.value = res.data.token
@@ -37,6 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function logout() {
+    isLoggingOut.value = true
     token.value = null
     user.value = null
     localStorage.removeItem('axpo_token')
@@ -47,6 +65,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user,
     token,
+    isLoggingOut,
     isAuthenticated,
     isAdmin,
     login,

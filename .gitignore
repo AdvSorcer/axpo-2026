@@ -7,11 +7,15 @@ backend/node_modules/
 dist/
 frontend/dist/
 
-# SQLite Database local data
+# SQLite Database local data & temporary files
 *.sqlite
 *.sqlite-journal
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
+data/
+backend/data/
 backend/*.db
 backend/*.sqlite
 

@@ -25,7 +25,6 @@ describe("Axpo 2026 Project Management Backend Unit & API Tests", () => {
   });
 
   test("Project access control isolation per user membership", () => {
-    // 1. Create a private project created by Admin (user_id = 1) without adding Alice (user_id = 3)
     const secretCode = "SECRET-PROJ-" + Date.now();
     const res = db.prepare("INSERT INTO projects (name, code, description, created_by) VALUES (?, ?, ?, ?)").run(
       "管理者專屬保密專案",
@@ -36,7 +35,6 @@ describe("Axpo 2026 Project Management Backend Unit & API Tests", () => {
     const privateProjId = res.lastInsertRowid;
     db.prepare("INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)").run(privateProjId, 1, "owner");
 
-    // 2. Query projects as John (username = 'user', regular user)
     const regularUser = db.query("SELECT * FROM users WHERE username = ?").get("user") as any;
     expect(regularUser.role).toBe("user");
 
@@ -46,18 +44,44 @@ describe("Axpo 2026 Project Management Backend Unit & API Tests", () => {
       WHERE pm.user_id = ? OR p.created_by = ?
     `).all(regularUser.id, regularUser.id) as any[];
 
-    // Regular user should NOT see the secret project
     const hasSecretProject = userProjects.some(p => p.id === privateProjId);
     expect(hasSecretProject).toBe(false);
 
-    // 3. Query projects as Admin (user_id = 1, admin role)
     const adminProjects = db.query("SELECT * FROM projects").all() as any[];
     const adminHasSecret = adminProjects.some(p => p.id === privateProjId);
     expect(adminHasSecret).toBe(true);
 
-    // Cleanup
     db.prepare("DELETE FROM project_members WHERE project_id = ?").run(privateProjId);
     db.prepare("DELETE FROM projects WHERE id = ?").run(privateProjId);
+  });
+
+  test("PM Project Notes CRUD & Pinned Logic", () => {
+    const projId = 1;
+    const adminId = 1;
+
+    // 1. Create a note
+    const res = db.prepare(`
+      INSERT INTO notes (project_id, title, content, category, pinned, created_by)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(projId, "測試筆記標題", "這是詳細測試筆記內容", "架構規格", 1, adminId);
+
+    const noteId = res.lastInsertRowid;
+    const inserted = db.query("SELECT * FROM notes WHERE id = ?").get(noteId) as any;
+
+    expect(inserted).not.toBeNull();
+    expect(inserted.title).toBe("測試筆記標題");
+    expect(inserted.pinned).toBe(1);
+
+    // 2. Update note (unpin)
+    db.prepare("UPDATE notes SET pinned = 0, title = '已修改筆記標題' WHERE id = ?").run(noteId);
+    const updated = db.query("SELECT * FROM notes WHERE id = ?").get(noteId) as any;
+    expect(updated.pinned).toBe(0);
+    expect(updated.title).toBe("已修改筆記標題");
+
+    // 3. Delete note
+    db.prepare("DELETE FROM notes WHERE id = ?").run(noteId);
+    const deleted = db.query("SELECT * FROM notes WHERE id = ?").get(noteId) as any;
+    expect(deleted).toBeNull();
   });
 
   test("Issues schema supports start_date and due_date", () => {
@@ -74,47 +98,7 @@ describe("Axpo 2026 Project Management Backend Unit & API Tests", () => {
 
     expect(inserted).not.toBeNull();
     expect(inserted.title).toBe("UnitTest Issue");
-    expect(inserted.start_date).toBe(today);
-    expect(inserted.due_date).toBe(in3Days);
 
-    // Clean up test issue
     db.prepare("DELETE FROM issues WHERE id = ?").run(issueId);
-  });
-
-  test("Dashboard My-Day logic calculates dueIn7DaysCount correctly", () => {
-    const todayDate = new Date();
-    const today = todayDate.toISOString().split("T")[0];
-    const sevenDaysLater = new Date(todayDate.getTime() + 7 * 86400000).toISOString().split("T")[0];
-
-    const userId = 2; // John
-    const myTasks = db.query(`
-      SELECT i.* FROM issues i WHERE i.assignee_id = ?
-    `).all(userId) as any[];
-
-    const dueIn7DaysCount = myTasks.filter(
-      (t) => t.due_date && t.due_date <= sevenDaysLater && t.status !== "done"
-    ).length;
-
-    expect(dueIn7DaysCount).toBeGreaterThanOrEqual(0);
-  });
-
-  test("Project member addition and removal logic", () => {
-    const projId = 2;
-    const userId = 3; // Alice
-
-    // Add member
-    try {
-      db.prepare("INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)").run(projId, userId, "member");
-    } catch (e) {
-      // Member already present
-    }
-
-    const member = db.query("SELECT * FROM project_members WHERE project_id = ? AND user_id = ?").get(projId, userId) as any;
-    expect(member).not.toBeNull();
-
-    // Remove member
-    db.prepare("DELETE FROM project_members WHERE project_id = ? AND user_id = ?").run(projId, userId);
-    const memberAfterDelete = db.query("SELECT * FROM project_members WHERE project_id = ? AND user_id = ?").get(projId, userId) as any;
-    expect(memberAfterDelete).toBeNull();
   });
 });

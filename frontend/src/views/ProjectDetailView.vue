@@ -26,6 +26,14 @@
         </n-button>
         <n-button
           size="small"
+          :type="activeTab === 'notes' ? 'primary' : 'default'"
+          secondary
+          @click="activeTab = 'notes'"
+        >
+          📝 專案筆記
+        </n-button>
+        <n-button
+          size="small"
           :type="activeTab === 'files' ? 'primary' : 'default'"
           secondary
           @click="activeTab = 'files'"
@@ -301,7 +309,66 @@
       </n-spin>
     </div>
 
-    <!-- TAB 2: DIRECT FILES REPOSITORY -->
+    <!-- TAB 2: PM PROJECT NOTES (MEMOS) -->
+    <div v-if="activeTab === 'notes'" class="tab-content">
+      <div class="notes-container glass-card">
+        <div class="notes-header">
+          <div class="header-left">
+            <h2>📝 PM 專案隨手筆記 & 備忘錄</h2>
+            <p class="sub-text">隨時記錄專案規格、環境帳號、技術決議與備忘草稿。</p>
+          </div>
+          <div class="header-right">
+            <n-input v-model:value="noteSearchQuery" placeholder="搜尋筆記..." clearable size="small" style="width: 200px;">
+              <template #prefix>🔍</template>
+            </n-input>
+            <n-button type="primary" size="small" @click="showCreateNoteModal = true">
+              ➕ 新增筆記 Note
+            </n-button>
+          </div>
+        </div>
+
+        <n-spin :show="loadingNotes">
+          <div v-if="filteredNotes.length === 0" class="empty-state">
+            📝 目前尚無隨手筆記。點擊右上角「新增筆記 Note」來新增專案備忘錄！
+          </div>
+
+          <div v-else class="notes-grid">
+            <div
+              v-for="note in filteredNotes"
+              :key="note.id"
+              class="note-card glass-card-hover"
+              :class="{ 'is-pinned': note.pinned }"
+              @click="openEditNoteModal(note)"
+            >
+              <div class="note-card-top">
+                <div class="note-category-row">
+                  <span v-if="note.pinned" class="pin-badge">📌 置頂筆記</span>
+                  <n-tag size="tiny" round :bordered="false">{{ note.category || '備忘錄' }}</n-tag>
+                </div>
+                <div class="note-actions" @click.stop>
+                  <n-button size="tiny" circle secondary @click="togglePinNote(note)">
+                    {{ note.pinned ? '📌' : '📍' }}
+                  </n-button>
+                  <n-button size="tiny" circle type="error" secondary @click="deleteNote(note)">
+                    🗑️
+                  </n-button>
+                </div>
+              </div>
+
+              <h3 class="note-title">{{ note.title }}</h3>
+              <p class="note-content">{{ note.content }}</p>
+
+              <div class="note-footer">
+                <span class="note-author">👤 {{ note.creator_name }}</span>
+                <span class="note-time">⏰ {{ note.updated_at ? note.updated_at.split(' ')[0] : '2026-07-26' }}</span>
+              </div>
+            </div>
+          </div>
+        </n-spin>
+      </div>
+    </div>
+
+    <!-- TAB 3: DIRECT FILES REPOSITORY -->
     <div v-if="activeTab === 'files'" class="tab-content">
       <div class="files-container glass-card">
         <div class="files-header">
@@ -351,7 +418,7 @@
       </div>
     </div>
 
-    <!-- TAB 3: MEETINGS -->
+    <!-- TAB 4: MEETINGS -->
     <div v-if="activeTab === 'meetings' && !isAllProjects" class="tab-content">
       <div class="meetings-container glass-card">
         <div class="meetings-header">
@@ -392,7 +459,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: PROJECT OVERVIEW & MEMBER MANAGEMENT -->
+    <!-- TAB 5: PROJECT OVERVIEW & MEMBER MANAGEMENT -->
     <div v-if="activeTab === 'info' && !isAllProjects" class="tab-content">
       <div class="info-layout">
         <!-- Project Description & Info -->
@@ -443,6 +510,57 @@
         </div>
       </div>
     </div>
+
+    <!-- Create / Edit Note Modal -->
+    <n-modal v-model:show="showCreateNoteModal" preset="card" title="📝 新增隨手筆記 Note" style="width: 520px;">
+      <n-form :model="noteForm">
+        <n-form-item label="筆記標題">
+          <n-input v-model:value="noteForm.title" placeholder="例如：Q3 部署規格與測試環境 IP" />
+        </n-form-item>
+        <n-form-item label="筆記分類 (Category)">
+          <n-select v-model:value="noteForm.category" :options="categoryOptions" tag placeholder="選擇或輸入新分類..." />
+        </n-form-item>
+        <n-form-item label="詳細內容">
+          <n-input v-model:value="noteForm.content" type="textarea" :rows="6" placeholder="隨手記錄專案備忘錄、帳號規格或會議結論..." />
+        </n-form-item>
+        <n-form-item label="置頂設定">
+          <n-checkbox v-model:checked="noteForm.pinned">📌 置頂此筆記</n-checkbox>
+        </n-form-item>
+      </n-form>
+      <template #footer>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <n-button @click="showCreateNoteModal = false">取消</n-button>
+          <n-button type="primary" :loading="submittingNote" @click="handleCreateNote">建立筆記</n-button>
+        </div>
+      </template>
+    </n-modal>
+
+    <!-- Edit Note Modal -->
+    <n-modal v-model:show="showEditNoteModal" preset="card" title="✏️ 編輯專案筆記 Note" style="width: 520px;">
+      <n-form :model="editNoteForm" v-if="editNoteForm">
+        <n-form-item label="筆記標題">
+          <n-input v-model:value="editNoteForm.title" />
+        </n-form-item>
+        <n-form-item label="筆記分類 (Category)">
+          <n-select v-model:value="editNoteForm.category" :options="categoryOptions" tag />
+        </n-form-item>
+        <n-form-item label="詳細內容">
+          <n-input v-model:value="editNoteForm.content" type="textarea" :rows="7" />
+        </n-form-item>
+        <n-form-item label="置頂設定">
+          <n-checkbox v-model:checked="editNoteForm.pinned">📌 置頂此筆記</n-checkbox>
+        </n-form-item>
+      </n-form>
+      <template #footer>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <n-button type="error" secondary @click="deleteNote(editNoteForm)">🗑️ 刪除筆記</n-button>
+          <div style="display: flex; gap: 12px;">
+            <n-button @click="showEditNoteModal = false">取消</n-button>
+            <n-button type="primary" :loading="submittingNote" @click="handleSaveNote">儲存變更</n-button>
+          </div>
+        </div>
+      </template>
+    </n-modal>
 
     <!-- Create Meeting Modal -->
     <n-modal v-model:show="showCreateMeetingModal" preset="card" title="➕ 新增會議記錄" style="width: 540px;">
@@ -571,6 +689,7 @@ import {
   NFormItem,
   NSelect,
   NDatePicker,
+  NCheckbox,
   NUpload,
   useMessage,
   UploadCustomRequestOptions
@@ -584,16 +703,19 @@ const message = useMessage()
 const authStore = useAuthStore()
 const projectStore = useProjectStore()
 
-const activeTab = ref<'kanban' | 'files' | 'meetings' | 'info'>('kanban')
+const activeTab = ref<'kanban' | 'notes' | 'files' | 'meetings' | 'info'>('kanban')
 const viewMode = ref<'kanban' | 'list'>('kanban')
 
 const loading = ref(true)
+const loadingNotes = ref(false)
 const loadingFiles = ref(false)
 const loadingMeetings = ref(false)
 const searchQuery = ref('')
+const noteSearchQuery = ref('')
 
 const project = ref<any>(null)
 const issues = ref<any[]>([])
+const notes = ref<any[]>([])
 const directFiles = ref<any[]>([])
 const meetings = ref<any[]>([])
 const allUsers = ref<any[]>([])
@@ -602,6 +724,127 @@ const draggedIssue = ref<any>(null)
 const isAllProjects = computed(() => {
   return route.params.id === 'all' || route.params.id === '0'
 })
+
+// PM NOTES STATE & MODALS
+const showCreateNoteModal = ref(false)
+const showEditNoteModal = ref(false)
+const submittingNote = ref(false)
+
+const noteForm = ref({
+  title: '',
+  content: '',
+  category: '備忘錄',
+  pinned: false
+})
+const editNoteForm = ref<any>(null)
+
+const categoryOptions = [
+  { label: '備忘錄', value: '備忘錄' },
+  { label: '環境架構', value: '環境架構' },
+  { label: '規格需求', value: '規格需求' },
+  { label: 'Milestone 目標', value: 'Milestone 目標' }
+]
+
+const filteredNotes = computed(() => {
+  return notes.value.filter(n => {
+    if (!noteSearchQuery.value) return true
+    return n.title.toLowerCase().includes(noteSearchQuery.value.toLowerCase()) ||
+           n.content.toLowerCase().includes(noteSearchQuery.value.toLowerCase()) ||
+           (n.category && n.category.toLowerCase().includes(noteSearchQuery.value.toLowerCase()))
+  })
+})
+
+async function loadNotes() {
+  if (!authStore.isAuthenticated || authStore.isLoggingOut) return
+  loadingNotes.value = true
+  try {
+    const url = isAllProjects.value ? '/api/notes' : `/api/notes?project_id=${route.params.id}`
+    const res = await axios.get(url)
+    if (res.data.success) {
+      notes.value = res.data.notes
+    }
+  } catch (err) {
+    if (authStore.isAuthenticated && !authStore.isLoggingOut) {
+      console.error(err)
+    }
+  } finally {
+    loadingNotes.value = false
+  }
+}
+
+async function handleCreateNote() {
+  if (!noteForm.value.title || !noteForm.value.content) {
+    message.warning('請填寫筆記標題與詳細內容')
+    return
+  }
+  submittingNote.value = true
+  try {
+    const targetProjId = isAllProjects.value ? (projectStore.projects[0]?.id || 1) : Number(route.params.id)
+    const res = await axios.post('/api/notes', {
+      project_id: targetProjId,
+      ...noteForm.value
+    })
+    if (res.data.success) {
+      message.success('筆記已成功建立！')
+      showCreateNoteModal.value = false
+      noteForm.value = { title: '', content: '', category: '備忘錄', pinned: false }
+      loadNotes()
+    }
+  } catch (err) {
+    message.error('建立筆記失敗')
+  } finally {
+    submittingNote.value = false
+  }
+}
+
+function openEditNoteModal(note: any) {
+  editNoteForm.value = { ...note, pinned: Boolean(note.pinned) }
+  showEditNoteModal.value = true
+}
+
+async function handleSaveNote() {
+  if (!editNoteForm.value) return
+  submittingNote.value = true
+  try {
+    const res = await axios.put(`/api/notes/${editNoteForm.value.id}`, editNoteForm.value)
+    if (res.data.success) {
+      message.success('筆記已更新！')
+      showEditNoteModal.value = false
+      loadNotes()
+    }
+  } catch (err) {
+    message.error('更新筆記失敗')
+  } finally {
+    submittingNote.value = false
+  }
+}
+
+async function togglePinNote(note: any) {
+  try {
+    const newPinned = !note.pinned
+    const res = await axios.put(`/api/notes/${note.id}`, { pinned: newPinned })
+    if (res.data.success) {
+      note.pinned = newPinned ? 1 : 0
+      message.success(newPinned ? '已置頂筆記' : '已取消置頂')
+      loadNotes()
+    }
+  } catch (err) {
+    message.error('操作失敗')
+  }
+}
+
+async function deleteNote(note: any) {
+  try {
+    const res = await axios.delete(`/api/notes/${note.id}`)
+    if (res.data.success) {
+      message.success('筆記已刪除')
+      showEditNoteModal.value = false
+      loadNotes()
+    }
+  } catch (err) {
+    message.error('刪除失敗')
+  }
+}
 
 const showCreateIssueModal = ref(false)
 const submittingIssue = ref(false)
@@ -642,9 +885,7 @@ async function fetchAllUsers() {
   }
 }
 
-function openUserEditModal(m: any) {
-  // member action hook
-}
+function openUserEditModal(m: any) {}
 
 async function updateIssueStatusQuick(issue: any, newStatus: string) {
   try {
@@ -680,7 +921,7 @@ async function handleCreateMeeting() {
 }
 
 async function loadMeetings() {
-  if (isAllProjects.value || !route.params.id) return
+  if (!authStore.isAuthenticated || authStore.isLoggingOut || isAllProjects.value || !route.params.id) return
   loadingMeetings.value = true
   try {
     const res = await axios.get(`/api/meetings?project_id=${route.params.id}`)
@@ -793,6 +1034,7 @@ const kanbanColumns = computed(() => {
 })
 
 async function loadProjectDetails() {
+  if (!authStore.isAuthenticated || authStore.isLoggingOut) return
   loading.value = true
   try {
     if (isAllProjects.value) {
@@ -801,6 +1043,7 @@ async function loadProjectDetails() {
       if (issuesRes.data.success) {
         issues.value = issuesRes.data.issues
       }
+      loadNotes()
       loadDirectFiles()
     } else {
       const projId = route.params.id
@@ -814,11 +1057,12 @@ async function loadProjectDetails() {
       if (issuesRes.data.success) {
         issues.value = issuesRes.data.issues
       }
+      loadNotes()
       loadDirectFiles()
       loadMeetings()
     }
   } catch (err) {
-    if (authStore.isAuthenticated) {
+    if (authStore.isAuthenticated && !authStore.isLoggingOut) {
       message.error('載入專案資料失敗')
     }
   } finally {
@@ -827,6 +1071,7 @@ async function loadProjectDetails() {
 }
 
 async function loadDirectFiles() {
+  if (!authStore.isAuthenticated || authStore.isLoggingOut) return
   loadingFiles.value = true
   try {
     const url = isAllProjects.value ? '/api/files' : `/api/files?project_id=${route.params.id}`
@@ -1199,6 +1444,111 @@ h1 {
 .col-assignee { width: 140px; font-size: 0.82rem; color: var(--text-main); font-weight: 600; }
 .col-dates { width: 180px; font-size: 0.78rem; color: var(--text-muted); }
 .col-action { width: 80px; text-align: right; }
+
+/* TAB 2: PM NOTES STYLING */
+.notes-container {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: 16px;
+}
+
+.notes-header h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
+}
+
+.note-card {
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border-glass);
+  background: rgba(161, 161, 170, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.note-card.is-pinned {
+  border-color: var(--text-main);
+  background: rgba(161, 161, 170, 0.08);
+}
+
+.note-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.note-category-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pin-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #ef4444;
+}
+
+.note-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.note-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.3;
+}
+
+.note-content {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.note-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-top: 1px dashed var(--border-glass);
+  padding-top: 10px;
+  margin-top: 4px;
+}
 
 /* FILES REPOSITORY STYLING */
 .files-container {

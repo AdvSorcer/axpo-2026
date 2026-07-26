@@ -448,6 +448,109 @@ const app = new Elysia()
   )
 
   // ----------------------------------------------------
+  // NOTES (PM MEMOS & DRAFTS) ROUTES
+  // ----------------------------------------------------
+  .group("/api/notes", (app) =>
+    app
+      .get("/", ({ query, user, set }) => {
+        if (!user) {
+          set.status = 401;
+          return { success: false, message: "Unauthorized" };
+        }
+        const projectId = query.project_id;
+        let sql = `
+          SELECT n.*, p.name as project_name, u.name as creator_name
+          FROM notes n
+          JOIN projects p ON n.project_id = p.id
+          JOIN users u ON n.created_by = u.id
+        `;
+        const params: any[] = [];
+        if (projectId) {
+          sql += " WHERE n.project_id = ?";
+          params.push(projectId);
+        }
+        sql += " ORDER BY n.pinned DESC, n.updated_at DESC";
+
+        const notes = db.query(sql).all(...params) as any[];
+        return { success: true, notes };
+      })
+
+      .post(
+        "/",
+        ({ body, user, set }) => {
+          if (!user) {
+            set.status = 401;
+            return { success: false, message: "Unauthorized" };
+          }
+          const { project_id, title, content, category, pinned } = body;
+          const res = db
+            .prepare(`
+              INSERT INTO notes (project_id, title, content, category, pinned, created_by)
+              VALUES (?, ?, ?, ?, ?, ?)
+            `)
+            .run(project_id, title, content, category || "備忘錄", pinned ? 1 : 0, user.id);
+
+          return { success: true, id: res.lastInsertRowid, message: "筆記已建立" };
+        },
+        {
+          body: t.Object({
+            project_id: t.Number(),
+            title: t.String(),
+            content: t.String(),
+            category: t.Optional(t.String()),
+            pinned: t.Optional(t.Boolean()),
+          }),
+        }
+      )
+
+      .put(
+        "/:id",
+        ({ params, body, user, set }) => {
+          if (!user) {
+            set.status = 401;
+            return { success: false, message: "Unauthorized" };
+          }
+
+          const existing = db.query("SELECT * FROM notes WHERE id = ?").get(params.id) as any;
+          if (!existing) {
+            set.status = 404;
+            return { success: false, message: "筆記不存在" };
+          }
+
+          const title = body.title !== undefined ? body.title : existing.title;
+          const content = body.content !== undefined ? body.content : existing.content;
+          const category = body.category !== undefined ? body.category : existing.category;
+          const pinned = body.pinned !== undefined ? (body.pinned ? 1 : 0) : existing.pinned;
+
+          db.prepare(`
+            UPDATE notes 
+            SET title = ?, content = ?, category = ?, pinned = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).run(title, content, category, pinned, params.id);
+
+          return { success: true, message: "筆記已更新" };
+        },
+        {
+          body: t.Object({
+            title: t.Optional(t.String()),
+            content: t.Optional(t.String()),
+            category: t.Optional(t.String()),
+            pinned: t.Optional(t.Boolean()),
+          }),
+        }
+      )
+
+      .delete("/:id", ({ params, user, set }) => {
+        if (!user) {
+          set.status = 401;
+          return { success: false, message: "Unauthorized" };
+        }
+        db.prepare("DELETE FROM notes WHERE id = ?").run(params.id);
+        return { success: true, message: "筆記已刪除" };
+      })
+  )
+
+  // ----------------------------------------------------
   // MEETINGS ROUTES
   // ----------------------------------------------------
   .group("/api/meetings", (app) =>

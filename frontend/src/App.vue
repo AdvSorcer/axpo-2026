@@ -4,72 +4,80 @@
       <n-notification-provider>
         <n-message-provider>
           <div class="app-layout" v-if="authStore.isAuthenticated">
-            <!-- Header Navbar -->
-            <header class="navbar glass-card">
-              <div class="nav-left">
-                <router-link to="/" class="brand">
-                  <div class="logo-icon">⚡</div>
-                  <span class="brand-name">AXPO <span class="brand-badge">2026</span></span>
-                </router-link>
+            <!-- Full Page View Mode (e.g. Full-Screen Gantt Timeline) -->
+            <div v-if="route.meta.fullPage" class="fullpage-container">
+              <router-view />
+            </div>
 
-                <!-- Navigation Tabs -->
-                <nav class="nav-links">
-                  <router-link to="/" class="nav-item" :class="{ active: route.name === 'dashboard' }">
-                    <span class="icon">✨</span>
-                    <span>今日焦點</span>
+            <!-- Standard Main App Layout -->
+            <template v-else>
+              <!-- Header Navbar -->
+              <header class="navbar glass-card">
+                <div class="nav-left">
+                  <router-link to="/" class="brand">
+                    <div class="logo-icon">⚡</div>
+                    <span class="brand-name">AXPO <span class="brand-badge">2026</span></span>
                   </router-link>
-                  <router-link to="/projects" class="nav-item" :class="{ active: route.name === 'projects' || route.params.id === 'all' }">
-                    <span class="icon">📁</span>
-                    <span>專案總覽</span>
-                  </router-link>
-                  <router-link to="/timeline" class="nav-item" :class="{ active: route.name === 'timeline' }">
-                    <span class="icon">📅</span>
-                    <span>時程圖</span>
-                  </router-link>
-                  <router-link v-if="authStore.isAdmin" to="/admin/users" class="nav-item" :class="{ active: route.name === 'admin-users' }">
-                    <span class="icon">🛡️</span>
-                    <span>成員與權限</span>
-                  </router-link>
-                </nav>
-              </div>
 
-              <div class="nav-right">
-                <!-- Theme Mode Toggle -->
-                <n-button size="small" circle secondary @click="toggleTheme" class="theme-toggle-btn">
-                  {{ isDarkMode ? '☀️' : '🌙' }}
-                </n-button>
-
-                <!-- Project Quick Switcher -->
-                <div class="project-switcher" v-if="projectStore.projects.length > 0">
-                  <span class="switcher-label">切換專案:</span>
-                  <n-select
-                    size="small"
-                    style="width: 380px;"
-                    :options="projectOptions"
-                    :value="currentSelectedValue"
-                    @update:value="handleProjectSelect"
-                  />
+                  <!-- Navigation Tabs -->
+                  <nav class="nav-links">
+                    <router-link to="/" class="nav-item" :class="{ active: route.name === 'dashboard' }">
+                      <span class="icon">✨</span>
+                      <span>今日焦點</span>
+                    </router-link>
+                    <router-link to="/projects" class="nav-item" :class="{ active: route.name === 'projects' || route.params.id === 'all' }">
+                      <span class="icon">📁</span>
+                      <span>專案總覽</span>
+                    </router-link>
+                    <router-link to="/timeline" class="nav-item" :class="{ active: route.name === 'timeline' }">
+                      <span class="icon">📅</span>
+                      <span>時程圖</span>
+                    </router-link>
+                    <router-link v-if="authStore.isAdmin" to="/admin/users" class="nav-item" :class="{ active: route.name === 'admin-users' }">
+                      <span class="icon">🛡️</span>
+                      <span>成員與權限</span>
+                    </router-link>
+                  </nav>
                 </div>
 
-                <!-- User Profile Menu -->
-                <n-dropdown :options="userMenuOptions" @select="handleUserMenuSelect">
-                  <div class="user-profile">
-                    <img :src="authStore.user?.avatar_url" class="avatar" />
-                    <div class="user-info">
-                      <div class="user-name">{{ authStore.user?.name }}</div>
-                      <div class="user-role-badge">
-                        {{ authStore.user?.role === 'admin' ? '系統管理員' : '一般成員' }}
+                <div class="nav-right">
+                  <!-- Theme Mode Toggle -->
+                  <n-button size="small" circle secondary @click="toggleTheme" class="theme-toggle-btn">
+                    {{ isDarkMode ? '☀️' : '🌙' }}
+                  </n-button>
+
+                  <!-- Project Quick Switcher -->
+                  <div class="project-switcher" v-if="projectStore.projects.length > 0">
+                    <span class="switcher-label">切換專案:</span>
+                    <n-select
+                      size="small"
+                      style="width: 380px;"
+                      :options="projectOptions"
+                      :value="currentSelectedValue"
+                      @update:value="handleProjectSelect"
+                    />
+                  </div>
+
+                  <!-- User Profile Menu -->
+                  <n-dropdown :options="userMenuOptions" @select="handleUserMenuSelect">
+                    <div class="user-profile">
+                      <img :src="authStore.user?.avatar_url" class="avatar" />
+                      <div class="user-info">
+                        <div class="user-name">{{ authStore.user?.name }}</div>
+                        <div class="user-role-badge">
+                          {{ authStore.isAdmin ? '👑 管理員' : '一般成員' }}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </n-dropdown>
-              </div>
-            </header>
+                  </n-dropdown>
+                </div>
+              </header>
 
-            <!-- Main Content Container -->
-            <main class="main-content">
-              <router-view />
-            </main>
+              <!-- Main Dynamic Content Container -->
+              <main class="main-content">
+                <router-view />
+              </main>
+            </template>
           </div>
 
           <!-- Login View Layout -->
@@ -189,6 +197,14 @@ function handleUserMenuSelect(key: string) {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+.fullpage-container {
+  width: 100vw;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--bg-dark-base);
 }
 
 .navbar {

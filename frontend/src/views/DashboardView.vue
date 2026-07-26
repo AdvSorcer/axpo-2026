@@ -51,7 +51,7 @@
       </div>
     </div>
 
-    <!-- Main Dynamic Filtered Tasks Section -->
+    <!-- Main Dynamic Filtered Tasks Section (Clean Redmine Single-Line Style) -->
     <div class="content-section glass-card">
       <div class="section-header">
         <div class="section-title">
@@ -84,34 +84,29 @@
                 @click.stop
                 @update:checked="(val) => toggleTaskDone(task, val)"
               />
-              <div class="task-details">
-                <div class="task-title-row">
-                  <span class="project-tag">[{{ task.project_code }}]</span>
-                  <span class="task-title" :class="{ strike: task.status === 'done' }">
-                    {{ task.title }}
-                  </span>
-                </div>
-                <div class="task-meta">
-                  <span class="meta-item">📝 {{ task.description || '無詳細描述' }}</span>
-                  <span
-                    v-if="task.due_date"
-                    class="meta-item due-tag"
-                    :class="{
-                      'is-overdue': task.due_date < todayDateString && task.status !== 'done',
-                      'is-today': task.due_date === todayDateString
-                    }"
-                  >
-                    <template v-if="task.due_date < todayDateString && task.status !== 'done'">
-                      ⚠️ 已逾期: {{ task.due_date }}
-                    </template>
-                    <template v-else-if="task.due_date === todayDateString">
-                      ⏰ 今日截止: {{ task.due_date }}
-                    </template>
-                    <template v-else>
-                      📅 截止: {{ task.due_date }}
-                    </template>
-                  </span>
-                </div>
+              <div class="task-single-line">
+                <span class="project-tag">[{{ task.project_code }}]</span>
+                <span class="task-title" :class="{ strike: task.status === 'done' }">
+                  {{ task.title }}
+                </span>
+                <span
+                  v-if="task.due_date"
+                  class="due-tag"
+                  :class="{
+                    'is-overdue': task.due_date < todayDateString && task.status !== 'done',
+                    'is-today': task.due_date === todayDateString
+                  }"
+                >
+                  <template v-if="task.due_date < todayDateString && task.status !== 'done'">
+                    ⚠️ 已逾期: {{ task.due_date }}
+                  </template>
+                  <template v-else-if="task.due_date === todayDateString">
+                    ⏰ 今日截止: {{ task.due_date }}
+                  </template>
+                  <template v-else>
+                    📅 截止: {{ task.due_date }}
+                  </template>
+                </span>
               </div>
             </div>
 
@@ -454,19 +449,20 @@ onMounted(() => {
 .task-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
+/* Redmine Clean Single-Line Style */
 .task-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(161, 161, 170, 0.05);
-  padding: 16px 20px;
-  border-radius: 10px;
+  background: rgba(161, 161, 170, 0.04);
+  padding: 12px 18px;
+  border-radius: 8px;
   border: 1px solid var(--border-glass);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .task-item:hover {
@@ -476,32 +472,32 @@ onMounted(() => {
 .task-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   flex: 1;
+  overflow: hidden;
 }
 
-.task-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.task-title-row {
+.task-single-line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .project-tag {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 800;
   color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .task-title {
   font-weight: 700;
   color: var(--text-main);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .task-title.strike {
@@ -509,12 +505,11 @@ onMounted(() => {
   color: var(--text-muted);
 }
 
-.task-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 0.8rem;
+.due-tag {
+  font-size: 0.78rem;
   color: var(--text-muted);
+  margin-left: 6px;
+  flex-shrink: 0;
 }
 
 .due-tag.is-overdue {
@@ -522,27 +517,23 @@ onMounted(() => {
   font-weight: 800;
 }
 
+.due-tag.is-today {
+  color: var(--text-main);
+  font-weight: 800;
+}
+
 .task-right {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .priority-badge {
-  padding: 2px 10px;
-  border-radius: 6px;
-  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
   font-weight: 700;
-}
-
-.edit-hint {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.edit-hint:hover {
-  color: var(--text-main);
 }
 
 .empty-state {

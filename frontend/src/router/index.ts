@@ -38,7 +38,7 @@ const router = createRouter({
       path: '/timeline',
       name: 'timeline',
       component: TimelineView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, fullPage: true }
     },
     {
       path: '/admin/users',

@@ -1,16 +1,27 @@
 <template>
-  <div class="timeline-page">
-    <!-- Controls Row: Month Selector & Filters -->
-    <div class="header-section">
-      <div class="controls">
+  <div class="fullpage-timeline">
+    <!-- Standalone Full-Page Header -->
+    <header class="timeline-top-bar glass-card">
+      <div class="top-bar-left">
+        <n-button size="small" secondary @click="goBackHome">
+          ⬅️ 返回主頁
+        </n-button>
+        <div class="brand-title">
+          <span class="icon">📅</span>
+          <span class="title-text">專案甘特時程圖 (Timeline)</span>
+        </div>
+      </div>
+
+      <div class="top-bar-right">
         <!-- Month Navigator -->
         <div class="month-navigator glass-card">
-          <n-button size="small" secondary @click="prevMonth">◀ 上一個月</n-button>
+          <n-button size="tiny" secondary @click="prevMonth">◀ 上一個月</n-button>
           <span class="current-month-text">🗓️ {{ currentYear }} 年 {{ currentMonth + 1 }} 月</span>
-          <n-button size="small" secondary @click="nextMonth">下一個月 ▶</n-button>
-          <n-button size="small" type="primary" secondary @click="goToday">今天</n-button>
+          <n-button size="tiny" secondary @click="nextMonth">下一個月 ▶</n-button>
+          <n-button size="tiny" type="primary" secondary @click="goToday">今天</n-button>
         </div>
 
+        <!-- Single Unified Project Selector -->
         <div class="filter-group">
           <span class="filter-label">選擇專案:</span>
           <n-select
@@ -35,91 +46,93 @@
           />
         </div>
       </div>
-    </div>
+    </header>
 
-    <!-- Timeline Gantt Container for Full Month -->
-    <n-spin :show="loading">
-      <div class="gantt-container glass-card">
-        <!-- Date Header Axis (Entire Month: 28 ~ 31 Days) -->
-        <div class="gantt-header-row">
-          <div class="gantt-label-col">議題 / Task 名稱</div>
-          <div class="gantt-days-grid" :style="{ gridTemplateColumns: `repeat(${daysInMonthCount}, 1fr)` }">
-            <div
-              v-for="day in dateColumns"
-              :key="day.dateStr"
-              class="day-cell-header"
-              :class="{ 'is-today': day.dateStr === todayStr }"
-            >
-              <div class="day-name">{{ day.dayOfWeek }}</div>
-              <div class="day-num">{{ day.dayNum }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Empty State -->
-        <div v-if="filteredIssues.length === 0" class="empty-gantt">
-          📅 本月份目前無相符的議題時程。點擊右上角切換月份或重置篩選！
-        </div>
-
-        <!-- Gantt Task Rows + Today Marker Line -->
-        <div v-else class="gantt-body">
-          <!-- TODAY VERTICAL MARKER LINE (Gantt Vertical Baseline) -->
-          <div
-            v-if="todayIndexInMonth !== -1"
-            class="today-marker-line"
-            :style="todayLineStyle"
-          >
-            <div class="today-marker-tag">TODAY</div>
-          </div>
-
-          <div
-            v-for="issue in filteredIssues"
-            :key="issue.id"
-            class="gantt-row glass-card-hover"
-            @click="openEditTaskModal(issue)"
-          >
-            <!-- Left Info Column -->
-            <div class="gantt-label-col">
-              <div class="task-info">
-                <span class="project-code">[{{ issue.project_code }}]</span>
-                <span class="task-name" :class="{ strike: issue.status === 'done' }">
-                  {{ issue.title }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Right Timeline Grid & Start/Due Bar -->
+    <!-- Full-Width Timeline Body -->
+    <div class="timeline-main-content">
+      <n-spin :show="loading">
+        <div class="gantt-container glass-card">
+          <!-- Date Header Axis (Entire Month: 28 ~ 31 Days) -->
+          <div class="gantt-header-row">
+            <div class="gantt-label-col">議題 / Task 名稱</div>
             <div class="gantt-days-grid" :style="{ gridTemplateColumns: `repeat(${daysInMonthCount}, 1fr)` }">
-              <!-- Background Grid Lines -->
               <div
                 v-for="day in dateColumns"
                 :key="day.dateStr"
-                class="day-grid-line"
+                class="day-cell-header"
                 :class="{ 'is-today': day.dateStr === todayStr }"
-              ></div>
-
-              <!-- Interactive Task Timeline Bar for Current Month -->
-              <div
-                v-if="isIssueVisibleInMonth(issue)"
-                class="gantt-bar-wrapper"
-                :style="calcBarStyle(issue)"
-                :title="`${issue.title} (${getIssueStartDate(issue)} ~ ${getIssueEndDate(issue)})`"
               >
-                <div
-                  class="gantt-bar"
-                  :class="[issue.status, 'p-' + issue.priority]"
-                >
-                  <span class="bar-title">{{ issue.title }}</span>
-                  <span class="bar-date">
-                    📅 {{ formatDateSpan(getIssueStartDate(issue), getIssueEndDate(issue)) }}
+                <div class="day-name">{{ day.dayOfWeek }}</div>
+                <div class="day-num">{{ day.dayNum }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div v-if="filteredIssues.length === 0" class="empty-gantt">
+            📅 本月份目前無相符的議題時程。點擊右上角切換月份或重置篩選！
+          </div>
+
+          <!-- Gantt Task Rows + Today Marker Line -->
+          <div v-else class="gantt-body">
+            <!-- TODAY VERTICAL MARKER LINE (Gantt Vertical Baseline) -->
+            <div
+              v-if="todayIndexInMonth !== -1"
+              class="today-marker-line"
+              :style="todayLineStyle"
+            >
+              <div class="today-marker-tag">TODAY</div>
+            </div>
+
+            <div
+              v-for="issue in filteredIssues"
+              :key="issue.id"
+              class="gantt-row glass-card-hover"
+              @click="openEditTaskModal(issue)"
+            >
+              <!-- Left Info Column -->
+              <div class="gantt-label-col">
+                <div class="task-info">
+                  <span class="project-code">[{{ issue.project_code }}]</span>
+                  <span class="task-name" :class="{ strike: issue.status === 'done' }">
+                    {{ issue.title }}
                   </span>
+                </div>
+              </div>
+
+              <!-- Right Timeline Grid & Start/Due Bar -->
+              <div class="gantt-days-grid" :style="{ gridTemplateColumns: `repeat(${daysInMonthCount}, 1fr)` }">
+                <!-- Background Grid Lines -->
+                <div
+                  v-for="day in dateColumns"
+                  :key="day.dateStr"
+                  class="day-grid-line"
+                  :class="{ 'is-today': day.dateStr === todayStr }"
+                ></div>
+
+                <!-- Interactive Task Timeline Bar for Current Month -->
+                <div
+                  v-if="isIssueVisibleInMonth(issue)"
+                  class="gantt-bar-wrapper"
+                  :style="calcBarStyle(issue)"
+                  :title="`${issue.title} (${getIssueStartDate(issue)} ~ ${getIssueEndDate(issue)})`"
+                >
+                  <div
+                    class="gantt-bar"
+                    :class="[issue.status, 'p-' + issue.priority]"
+                  >
+                    <span class="bar-title">{{ issue.title }}</span>
+                    <span class="bar-date">
+                      📅 {{ formatDateSpan(getIssueStartDate(issue), getIssueEndDate(issue)) }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </n-spin>
+      </n-spin>
+    </div>
 
     <!-- Edit Task Modal with Assignee Select -->
     <n-modal v-model:show="showEditModal" preset="card" title="✏️ 編輯議題與甘特圖時程" style="width: 560px;">
@@ -163,11 +176,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { NSpin, NSelect, NModal, NForm, NFormItem, NInput, NDatePicker, NButton, useMessage } from 'naive-ui'
 import axios from 'axios'
 import { useAuthStore } from '../stores/auth'
 import { useProjectStore } from '../stores/project'
 
+const router = useRouter()
 const message = useMessage()
 const authStore = useAuthStore()
 const projectStore = useProjectStore()
@@ -180,6 +195,10 @@ const selectedStatus = ref<string | null>(null)
 
 const currentDate = ref(new Date())
 const todayStr = new Date().toISOString().split('T')[0]
+
+function goBackHome() {
+  router.push('/')
+}
 
 const userSelectOptions = computed(() => {
   return allUsers.value.map(u => ({
@@ -273,7 +292,7 @@ const todayLineStyle = computed(() => {
   const centerPercent = (index + 0.5) * cellPercent
 
   return {
-    left: `calc(260px + (100% - 260px) * ${centerPercent / 100})`
+    left: `calc(320px + (100% - 320px) * ${centerPercent / 100})`
   }
 })
 
@@ -386,6 +405,7 @@ const submittingEdit = ref(false)
 const editForm = ref<any>(null)
 
 async function fetchIssues() {
+  if (!authStore.isAuthenticated || authStore.isLoggingOut) return
   loading.value = true
   try {
     const res = await axios.get('/api/issues')
@@ -393,7 +413,7 @@ async function fetchIssues() {
       issues.value = res.data.issues
     }
   } catch (err) {
-    if (authStore.isAuthenticated) {
+    if (authStore.isAuthenticated && !authStore.isLoggingOut) {
       message.error('載入議題時程失敗')
     }
   } finally {
@@ -445,19 +465,43 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.timeline-page {
+.fullpage-timeline {
+  width: 100vw;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  background: var(--bg-dark-base);
+  padding: 16px 24px 32px 24px;
+  box-sizing: border-box;
+  gap: 20px;
 }
 
-.header-section {
+/* Standalone Full-Page Header Top Bar */
+.timeline-top-bar {
+  height: 64px;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-radius: 12px;
 }
 
-.controls {
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.top-bar-right {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -466,13 +510,13 @@ onMounted(() => {
 .month-navigator {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px 14px;
+  gap: 10px;
+  padding: 4px 12px;
   border-radius: 8px;
 }
 
 .current-month-text {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 800;
   color: var(--text-main);
 }
@@ -489,25 +533,32 @@ onMounted(() => {
   font-weight: 600;
 }
 
+.timeline-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Monthly Gantt Chart Styling */
 .gantt-container {
-  padding: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   overflow-x: auto;
+  min-height: calc(100vh - 130px);
 }
 
 .gantt-header-row {
   display: flex;
   align-items: center;
   border-bottom: 2px solid var(--border-glass);
-  padding-bottom: 12px;
+  padding-bottom: 14px;
   font-weight: 700;
 }
 
 .gantt-label-col {
-  width: 260px;
-  min-width: 260px;
+  width: 320px;
+  min-width: 320px;
   padding-right: 16px;
   font-size: 0.9rem;
   color: var(--text-main);
@@ -540,7 +591,7 @@ onMounted(() => {
 }
 
 .empty-gantt {
-  padding: 50px 0;
+  padding: 60px 0;
   text-align: center;
   color: var(--text-muted);
 }
@@ -610,24 +661,6 @@ onMounted(() => {
 }
 .task-name.strike {
   text-decoration: line-through;
-  color: var(--text-muted);
-}
-
-.task-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.priority-badge {
-  font-size: 0.7rem;
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-.assignee-text {
-  font-size: 0.75rem;
   color: var(--text-muted);
 }
 

@@ -3,7 +3,7 @@
     <div class="login-box glass-card">
       <div class="header">
         <div class="logo">⚡</div>
-        <h2>AXPO 專案管理平台</h2>
+        <h2>{{ configStore.appName }} 專案管理平台</h2>
       </div>
 
       <n-form ref="formRef" :model="form" class="form">
@@ -43,11 +43,13 @@ import { useRouter } from 'vue-router'
 import { NForm, NFormItem, NInput, NButton, useMessage } from 'naive-ui'
 import { useAuthStore } from '../stores/auth'
 import { useProjectStore } from '../stores/project'
+import { useConfigStore } from '../stores/config'
 
 const router = useRouter()
 const message = useMessage()
 const authStore = useAuthStore()
 const projectStore = useProjectStore()
+const configStore = useConfigStore()
 
 const loading = ref(false)
 const form = ref({

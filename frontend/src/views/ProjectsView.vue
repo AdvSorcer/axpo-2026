@@ -20,7 +20,7 @@
         >
           <div class="project-card-header">
             <div class="project-code">[{{ p.code }}]</div>
-            <n-tag size="small" round>Active</n-tag>
+            <n-tag size="small" :type="getStatusTagType(p.status)" round>{{ getStatusLabel(p.status) }}</n-tag>
           </div>
 
           <h3 class="project-name">{{ p.name }}</h3>
@@ -87,6 +87,26 @@ onMounted(() => {
     projectStore.fetchProjects()
   }
 })
+
+function getStatusTagType(status?: string) {
+  switch (status) {
+    case 'completed': return 'info'
+    case 'planning': return 'warning'
+    case 'archived': return 'default'
+    case 'active':
+    default: return 'success'
+  }
+}
+
+function getStatusLabel(status?: string) {
+  switch (status) {
+    case 'completed': return '已完成 (Completed)'
+    case 'planning': return '籌備中 (Planning)'
+    case 'archived': return '已歸檔 (Archived)'
+    case 'active':
+    default: return '進行中 (Active)'
+  }
+}
 
 function selectProject(p: Project) {
   projectStore.setCurrentProject(p)

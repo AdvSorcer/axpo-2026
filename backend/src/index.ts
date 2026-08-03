@@ -40,6 +40,11 @@ const app = new Elysia()
     return { user };
   })
 
+  // Public Config Route
+  .get("/api/config", () => ({
+    appName: process.env.APP_NAME || "AXPO",
+  }))
+
   // ----------------------------------------------------
   // AUTH ROUTES
   // ----------------------------------------------------
@@ -262,6 +267,64 @@ const app = new Elysia()
 
         return { success: true, project: { ...project, members } };
       })
+
+      .patch(
+        "/:id",
+        ({ params, body, user, set }) => {
+          if (!user) {
+            set.status = 401;
+            return { success: false, message: "Unauthorized" };
+          }
+
+          const project = db.query("SELECT * FROM projects WHERE id = ?").get(params.id) as any;
+          if (!project) {
+            set.status = 404;
+            return { success: false, message: "專案不存在" };
+          }
+
+          if (user.role !== "admin") {
+            const isMember = db.query("SELECT id FROM project_members WHERE project_id = ? AND user_id = ?").get(params.id, user.id);
+            if (!isMember && project.created_by !== user.id) {
+              set.status = 403;
+              return { success: false, message: "您沒有權限修改此專案" };
+            }
+          }
+
+          const { name, description, status } = body;
+          const updates: string[] = [];
+          const values: any[] = [];
+
+          if (name !== undefined) {
+            updates.push("name = ?");
+            values.push(name);
+          }
+          if (description !== undefined) {
+            updates.push("description = ?");
+            values.push(description);
+          }
+          if (status !== undefined) {
+            updates.push("status = ?");
+            values.push(status);
+          }
+
+          if (updates.length === 0) {
+            return { success: true, message: "未提供需要更新的欄位" };
+          }
+
+          values.push(params.id);
+          db.prepare(`UPDATE projects SET ${updates.join(", ")} WHERE id = ?`).run(...values);
+
+          const updatedProject = db.query("SELECT * FROM projects WHERE id = ?").get(params.id);
+          return { success: true, project: updatedProject, message: "專案資訊與狀態已更新" };
+        },
+        {
+          body: t.Object({
+            name: t.Optional(t.String()),
+            description: t.Optional(t.String()),
+            status: t.Optional(t.String()),
+          }),
+        }
+      )
 
       .post(
         "/:id/members",

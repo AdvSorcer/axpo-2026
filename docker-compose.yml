@@ -11,6 +11,7 @@ services:
     environment:
       - JWT_SECRET=axpo-production-super-secret-key-2026
       - PORT=3005
+      - APP_NAME=專案管理
     volumes:
       - sqlite_data:/app/data
       - uploads_data:/app/uploads

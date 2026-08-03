@@ -32,6 +32,7 @@ export function initDatabase() {
       name TEXT NOT NULL,
       code TEXT UNIQUE NOT NULL,
       description TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
       created_by INTEGER NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (created_by) REFERENCES users (id)
@@ -114,6 +115,17 @@ export function initDatabase() {
     const hasStartDate = tableInfo.some((col: any) => col.name === "start_date");
     if (!hasStartDate) {
       db.exec("ALTER TABLE issues ADD COLUMN start_date TEXT;");
+    }
+  } catch (e) {
+    // Ignore migration error
+  }
+
+  // Migrate missing status column in existing projects table if needed
+  try {
+    const projTableInfo = db.query("PRAGMA table_info(projects);").all() as any[];
+    const hasStatus = projTableInfo.some((col: any) => col.name === "status");
+    if (!hasStatus) {
+      db.exec("ALTER TABLE projects ADD COLUMN status TEXT NOT NULL DEFAULT 'active';");
     }
   } catch (e) {
     // Ignore migration error

@@ -42,11 +42,28 @@ export const useProjectStore = defineStore('project', () => {
     currentProject.value = project
   }
 
+  async function updateProject(id: number, data: { name?: string; description?: string; status?: string }) {
+    try {
+      const res = await axios.patch(`/api/projects/${id}`, data)
+      if (res.data.success) {
+        if (currentProject.value && currentProject.value.id === id) {
+          currentProject.value = { ...currentProject.value, ...res.data.project }
+        }
+        await fetchProjects()
+        return { success: true, message: res.data.message }
+      }
+      return { success: false, message: res.data.message || '更新專案失敗' }
+    } catch (err: any) {
+      return { success: false, message: err.response?.data?.message || '更新專案失敗' }
+    }
+  }
+
   return {
     projects,
     currentProject,
     loading,
     fetchProjects,
-    setCurrentProject
+    setCurrentProject,
+    updateProject
   }
 })

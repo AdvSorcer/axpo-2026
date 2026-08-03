@@ -16,7 +16,7 @@
                 <div class="nav-left">
                   <router-link to="/" class="brand">
                     <div class="logo-icon">⚡</div>
-                    <span class="brand-name">AXPO</span>
+                    <span class="brand-name">{{ configStore.appName }}</span>
                   </router-link>
 
                   <!-- Navigation Tabs -->
@@ -106,11 +106,13 @@ import {
 } from 'naive-ui'
 import { useAuthStore } from './stores/auth'
 import { useProjectStore } from './stores/project'
+import { useConfigStore } from './stores/config'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const projectStore = useProjectStore()
+const configStore = useConfigStore()
 
 const isDarkMode = ref(false)
 
@@ -144,6 +146,7 @@ const currentThemeOverrides = computed<GlobalThemeOverrides>(() => ({
 
 onMounted(() => {
   document.body.classList.add('light-mode')
+  configStore.fetchConfig()
   if (authStore.isAuthenticated) {
     projectStore.fetchProjects()
   }

@@ -456,7 +456,22 @@
             <div class="info-meta">
               <div class="meta-row">👑 專案建立者 (Owner): <strong>{{ project?.owner_name }}</strong></div>
               <div class="meta-row">📅 建立時間: <strong>{{ project?.created_at ? project.created_at.split(' ')[0] : '2026-07-25' }}</strong></div>
-              <div class="meta-row">🏷️ 專案狀態: <n-tag size="small" type="success" round>進行中 (Active)</n-tag></div>
+              <div class="meta-row status-meta-row">
+                <span>🏷️ 專案狀態:</span>
+                <n-tag size="small" :type="getStatusTagType(project?.status)" round class="status-tag" style="margin-left: 6px;">
+                  {{ getStatusLabel(project?.status) }}
+                </n-tag>
+                <div class="status-selector" style="display: inline-flex; align-items: center; margin-left: 12px;">
+                  <span class="change-label" style="font-size: 12px; color: #a1a1aa; margin-right: 6px;">切換狀態:</span>
+                  <n-select
+                    :value="project?.status || 'active'"
+                    size="tiny"
+                    :options="projectStatusOptions"
+                    style="width: 160px;"
+                    @update:value="handleProjectStatusChange"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -728,8 +743,49 @@ const categoryOptions = [
   { label: '備忘錄', value: '備忘錄' },
   { label: '環境架構', value: '環境架構' },
   { label: '規格需求', value: '規格需求' },
-  { label: 'Milestone 目標', value: 'Milestone 目標' }
+  { label: '會議重點', value: '會議重點' },
+  { label: '其他記錄', value: '其他記錄' }
 ]
+
+const projectStatusOptions = [
+  { label: '進行中 (Active)', value: 'active' },
+  { label: '已完成 (Completed)', value: 'completed' },
+  { label: '籌備中 (Planning)', value: 'planning' },
+  { label: '已歸檔 (Archived)', value: 'archived' }
+]
+
+function getStatusTagType(status?: string) {
+  switch (status) {
+    case 'completed': return 'info'
+    case 'planning': return 'warning'
+    case 'archived': return 'default'
+    case 'active':
+    default: return 'success'
+  }
+}
+
+function getStatusLabel(status?: string) {
+  switch (status) {
+    case 'completed': return '已完成 (Completed)'
+    case 'planning': return '籌備中 (Planning)'
+    case 'archived': return '已歸檔 (Archived)'
+    case 'active':
+    default: return '進行中 (Active)'
+  }
+}
+
+async function handleProjectStatusChange(newStatus: string) {
+  if (!project.value?.id) return
+  const res = await projectStore.updateProject(project.value.id, { status: newStatus })
+  if (res.success) {
+    message.success('專案狀態已更新')
+    if (project.value) {
+      project.value.status = newStatus
+    }
+  } else {
+    message.error(res.message)
+  }
+}
 
 const filteredNotes = computed(() => {
   return notes.value.filter(n => {

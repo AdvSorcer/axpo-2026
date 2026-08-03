@@ -98,7 +98,31 @@ describe("Axpo 2026 Project Management Backend Unit & API Tests", () => {
 
     expect(inserted).not.toBeNull();
     expect(inserted.title).toBe("UnitTest Issue");
+    expect(inserted.start_date).toBe(today);
+    expect(inserted.due_date).toBe(in3Days);
 
     db.prepare("DELETE FROM issues WHERE id = ?").run(issueId);
+  });
+
+  test("Project status schema & update status test", () => {
+    const res = db.prepare("INSERT INTO projects (name, code, description, created_by, status) VALUES (?, ?, ?, ?, ?)").run(
+      "狀態測試專案",
+      "STATUS-TEST-" + Date.now(),
+      "測試專案狀態更新功能",
+      1,
+      "active"
+    );
+    const projId = res.lastInsertRowid;
+    const inserted = db.query("SELECT * FROM projects WHERE id = ?").get(projId) as any;
+    expect(inserted).not.toBeNull();
+    expect(inserted.status).toBe("active");
+
+    // Update status to completed
+    db.prepare("UPDATE projects SET status = ? WHERE id = ?").run("completed", projId);
+    const updated = db.query("SELECT * FROM projects WHERE id = ?").get(projId) as any;
+    expect(updated.status).toBe("completed");
+
+    // Cleanup
+    db.prepare("DELETE FROM projects WHERE id = ?").run(projId);
   });
 });

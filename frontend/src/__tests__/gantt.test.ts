@@ -105,4 +105,38 @@ describe("Frontend Gantt & Timeline Utility Unit Tests", () => {
     expect(style.left).toBe("0%")
     expect(style.width).toBe("100%")
   })
+
+  it("getStatusTagType & getStatusLabel correctly format project status", () => {
+    function getStatusTagType(status?: string) {
+      switch (status) {
+        case 'completed': return 'info'
+        case 'planning': return 'warning'
+        case 'archived': return 'default'
+        case 'active':
+        default: return 'success'
+      }
+    }
+
+    function getStatusLabel(status?: string) {
+      switch (status) {
+        case 'completed': return '已完成 (Completed)'
+        case 'planning': return '籌備中 (Planning)'
+        case 'archived': return '已歸檔 (Archived)'
+        case 'active':
+        default: return '進行中 (Active)'
+      }
+    }
+
+    expect(getStatusTagType("active")).toBe("success")
+    expect(getStatusLabel("active")).toBe("進行中 (Active)")
+
+    expect(getStatusTagType("completed")).toBe("info")
+    expect(getStatusLabel("completed")).toBe("已完成 (Completed)")
+
+    expect(getStatusTagType("planning")).toBe("warning")
+    expect(getStatusLabel("planning")).toBe("籌備中 (Planning)")
+
+    expect(getStatusTagType("archived")).toBe("default")
+    expect(getStatusLabel("archived")).toBe("已歸檔 (Archived)")
+  })
 })

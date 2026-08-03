@@ -1,0 +1,9 @@
+node_modules
+dist
+data
+uploads
+*.db
+*.db-*
+*.sqlite*
+.git
+.env

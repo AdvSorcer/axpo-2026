@@ -7,10 +7,10 @@ services:
     container_name: axpo-backend
     restart: always
     ports:
-      - "3001:3001"
+      - "3005:3005"
     environment:
       - JWT_SECRET=axpo-production-super-secret-key-2026
-      - PORT=3001
+      - PORT=3005
     volumes:
       - sqlite_data:/app/data
       - uploads_data:/app/uploads
@@ -25,7 +25,7 @@ services:
     container_name: axpo-frontend
     restart: always
     ports:
-      - "3000:80"
+      - "3004:80"
     depends_on:
       - backend
     networks:

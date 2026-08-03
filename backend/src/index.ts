@@ -789,6 +789,6 @@ const app = new Elysia()
       )
   )
 
-  .listen(3001);
+  .listen(process.env.PORT ? parseInt(process.env.PORT) : 3005);
 
 console.log(`🚀 Axpo ElysiaJS Backend is running at http://${app.server?.hostname}:${app.server?.port}`);

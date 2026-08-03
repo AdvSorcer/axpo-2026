@@ -190,7 +190,7 @@ export function initDatabase() {
           db.prepare(`
             INSERT INTO notes (project_id, title, content, category, pinned, created_by)
             VALUES
-            (?, '📌 專案環境與測試數據說明', '測試環境 API 埠號為 3001，前端 Port 為 3000。管理者預設帳號為 admin / admin123。', '環境架構', 1, ?),
+            (?, '📌 專案環境與測試數據說明', '測試環境 API 埠號為 3005，前端 Port 為 3004。管理者預設帳號為 admin / admin123。', '環境架構', 1, ?),
             (?, '💡 Q3 核心 Milestone 目標備忘', '1. 完成 Docker Compose 部署\n2. 增加 PM 隨手專案筆記功能\n3. 單元測試覆蓋率 100%', ' Milestone', 0, ?);
           `).run(p1.lastInsertRowid, admin.id, p1.lastInsertRowid, admin.id);
         }

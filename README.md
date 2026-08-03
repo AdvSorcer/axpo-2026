@@ -13,13 +13,13 @@ Axpo 2026 是一款極致流暢、現代深色/極簡白風格的輕量化專案
 ## 🐳 使用 Docker Compose 
 
 ```bash
-# 啟動全站服務 (前端 Port 3000, 後端 Port 3001)
+# 啟動全站服務 (前端 Port 3004, 後端 Port 3005)
 docker compose up -d --build
 ```
 
 開啟瀏覽器存取：
-- **前端介面**: [http://localhost:3000](http://localhost:3000)
-- **後端 API**: [http://localhost:3001](http://localhost:3001)
+- **前端介面**: [http://localhost:3004](http://localhost:3004)
+- **後端 API**: [http://localhost:3005](http://localhost:3005)
 
 停止 Docker 服務：
 ```bash

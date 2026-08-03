@@ -13,9 +13,9 @@ COPY . .
 # Create uploads and data directories
 RUN mkdir -p uploads
 
-EXPOSE 3001
+EXPOSE 3005
 
 ENV NODE_ENV=production
-ENV PORT=3001
+ENV PORT=3005
 
 CMD ["bun", "src/index.ts"]

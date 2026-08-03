@@ -11,27 +11,65 @@
     </div>
 
     <n-spin :show="loading">
-      <div class="projects-grid">
-        <div
-          v-for="p in projectStore.projects"
-          :key="p.id"
-          class="project-card glass-card glass-card-hover"
-          @click="selectProject(p)"
-        >
-          <div class="project-card-header">
-            <div class="project-code">[{{ p.code }}]</div>
-            <n-tag size="small" :type="getStatusTagType(p.status)" round>{{ getStatusLabel(p.status) }}</n-tag>
-          </div>
-
-          <h3 class="project-name">{{ p.name }}</h3>
-          <p class="project-desc">{{ p.description || '無描述' }}</p>
-
-          <div class="project-footer">
-            <div class="stat-badge">
-              <span>📋 議題: {{ p.issue_count || 0 }} (已完成 {{ p.completed_issue_count || 0 }})</span>
+      <!-- Section 1: Active & Ongoing Projects -->
+      <div class="project-section">
+        <h2 class="section-title">🚀 進行中與一般專案 ({{ activeProjects.length }})</h2>
+        <div class="projects-grid" v-if="activeProjects.length > 0">
+          <div
+            v-for="p in activeProjects"
+            :key="p.id"
+            class="project-card glass-card glass-card-hover"
+            @click="selectProject(p)"
+          >
+            <div class="project-card-header">
+              <div class="project-code">[{{ p.code }}]</div>
+              <n-tag size="small" :type="getStatusTagType(p.status)" round>{{ getStatusLabel(p.status) }}</n-tag>
             </div>
-            <div class="owner-name">👑 {{ p.owner_name }}</div>
+
+            <h3 class="project-name">{{ p.name }}</h3>
+            <p class="project-desc">{{ p.description || '無描述' }}</p>
+
+            <div class="project-footer">
+              <div class="stat-badge">
+                <span>📋 議題: {{ p.issue_count || 0 }} (已完成 {{ p.completed_issue_count || 0 }})</span>
+              </div>
+              <div class="owner-name">👑 {{ p.owner_name }}</div>
+            </div>
           </div>
+        </div>
+        <div v-else class="empty-section glass-card">
+          <p>尚無進行中或一般專案。</p>
+        </div>
+      </div>
+
+      <!-- Section 2: Archived Projects -->
+      <div class="project-section archived-section">
+        <h2 class="section-title">📦 已歸檔專案 ({{ archivedProjects.length }})</h2>
+        <div class="projects-grid" v-if="archivedProjects.length > 0">
+          <div
+            v-for="p in archivedProjects"
+            :key="p.id"
+            class="project-card glass-card glass-card-hover archived-card"
+            @click="selectProject(p)"
+          >
+            <div class="project-card-header">
+              <div class="project-code">[{{ p.code }}]</div>
+              <n-tag size="small" :type="getStatusTagType(p.status)" round>{{ getStatusLabel(p.status) }}</n-tag>
+            </div>
+
+            <h3 class="project-name">{{ p.name }}</h3>
+            <p class="project-desc">{{ p.description || '無描述' }}</p>
+
+            <div class="project-footer">
+              <div class="stat-badge">
+                <span>📋 議題: {{ p.issue_count || 0 }} (已完成 {{ p.completed_issue_count || 0 }})</span>
+              </div>
+              <div class="owner-name">👑 {{ p.owner_name }}</div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="empty-section glass-card">
+          <p style="color: #71717a;">目前沒有已歸檔的專案。</p>
         </div>
       </div>
     </n-spin>
@@ -61,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { NButton, NSpin, NTag, NModal, NForm, NFormItem, NInput, useMessage } from 'naive-ui'
 import axios from 'axios'
@@ -72,6 +110,14 @@ const router = useRouter()
 const message = useMessage()
 const authStore = useAuthStore()
 const projectStore = useProjectStore()
+
+const activeProjects = computed(() => {
+  return projectStore.projects.filter(p => p.status !== 'archived')
+})
+
+const archivedProjects = computed(() => {
+  return projectStore.projects.filter(p => p.status === 'archived')
+})
 
 const loading = ref(false)
 const showCreateModal = ref(false)
@@ -161,6 +207,47 @@ h1 {
   color: var(--text-muted);
   font-size: 0.9rem;
   margin-top: 4px;
+}
+
+.modal-form {
+  margin-top: 12px;
+}
+
+.project-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.archived-section {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.empty-section {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.archived-card {
+  opacity: 0.75;
+  filter: grayscale(20%);
+  border-style: dashed;
+}
+
+.archived-card:hover {
+  opacity: 1;
+  filter: grayscale(0%);
 }
 
 .create-btn {

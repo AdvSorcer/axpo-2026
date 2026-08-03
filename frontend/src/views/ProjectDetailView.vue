@@ -891,11 +891,18 @@ async function deleteNote(note: any) {
 const showCreateIssueModal = ref(false)
 const submittingIssue = ref(false)
 
+function getLocalDateString(date: Date = new Date()): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const showCreateMeetingModal = ref(false)
 const submittingMeeting = ref(false)
 const meetingForm = ref({
   title: '',
-  date: new Date().toISOString().split('T')[0] + ' 14:00',
+  date: getLocalDateString() + ' 14:00',
   attendees: '',
   summary: '',
   action_items: ''
@@ -952,7 +959,7 @@ async function handleCreateMeeting() {
     if (res.data.success) {
       message.success('會議記錄已建立！')
       showCreateMeetingModal.value = false
-      meetingForm.value = { title: '', date: new Date().toISOString().split('T')[0] + ' 14:00', attendees: '', summary: '', action_items: '' }
+      meetingForm.value = { title: '', date: getLocalDateString() + ' 14:00', attendees: '', summary: '', action_items: '' }
       loadMeetings()
     }
   } catch (err) {

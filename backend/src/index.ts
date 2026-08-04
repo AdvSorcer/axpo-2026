@@ -850,6 +850,33 @@ const app = new Elysia()
           }),
         }
       )
+
+      .delete("/:id", ({ params, user, set }) => {
+        if (!user) {
+          set.status = 401;
+          return { success: false, message: "Unauthorized" };
+        }
+        if (user.role !== "admin") {
+          set.status = 403;
+          return { success: false, message: "權限不足，僅管理員可刪除成員" };
+        }
+        if (user.id === Number(params.id)) {
+          set.status = 400;
+          return { success: false, message: "無法刪除目前正在使用的管理員帳號" };
+        }
+
+        const existing = db.query("SELECT * FROM users WHERE id = ?").get(params.id) as any;
+        if (!existing) {
+          set.status = 404;
+          return { success: false, message: "使用者不存在" };
+        }
+
+        // Clear assignee_id in issues for deleted user
+        db.prepare("UPDATE issues SET assignee_id = NULL WHERE assignee_id = ?").run(params.id);
+
+        db.prepare("DELETE FROM users WHERE id = ?").run(params.id);
+        return { success: true, message: "成員帳號已成功刪除" };
+      })
   )
 
   .listen(process.env.PORT ? parseInt(process.env.PORT) : 3005);

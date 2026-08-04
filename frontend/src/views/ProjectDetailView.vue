@@ -497,15 +497,24 @@
                 <div class="member-email">{{ m.email }}</div>
                 <div class="member-role">{{ m.user_role === 'admin' ? '👑 系統管理員' : '一般成員' }}</div>
               </div>
-              <n-button
-                v-if="authStore.isAdmin && m.user_id !== project.created_by"
-                size="tiny"
-                type="error"
-                secondary
-                @click.stop="handleRemoveMember(m.user_id)"
-              >
-                🗑️ 移出
-              </n-button>
+              <div @click.stop v-if="authStore.isAdmin && m.user_id !== project.created_by">
+                <n-popconfirm
+                  @positive-click="handleRemoveMember(m.user_id)"
+                  positive-text="確定移出"
+                  negative-text="取消"
+                >
+                  <template #trigger>
+                    <n-button
+                      size="tiny"
+                      type="error"
+                      secondary
+                    >
+                      🗑️ 移出
+                    </n-button>
+                  </template>
+                  確定要將成員「{{ m.name }}」從此專案中移出嗎？
+                </n-popconfirm>
+              </div>
             </div>
           </div>
         </div>
@@ -692,6 +701,7 @@ import {
   NDatePicker,
   NCheckbox,
   NUpload,
+  NPopconfirm,
   useMessage,
   UploadCustomRequestOptions
 } from 'naive-ui'

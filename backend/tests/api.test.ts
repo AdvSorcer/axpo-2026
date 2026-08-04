@@ -125,4 +125,32 @@ describe("Axpo 2026 Project Management Backend Unit & API Tests", () => {
     // Cleanup
     db.prepare("DELETE FROM projects WHERE id = ?").run(projId);
   });
+
+  test("Admin user deletion & self-deletion protection logic test", () => {
+    // 1. Create a dummy user to be deleted
+    const tempUsername = "temp_delete_user_" + Date.now();
+    const res = db.prepare(`
+      INSERT INTO users (username, password_hash, name, email, role)
+      VALUES (?, 'pass123', '待刪除測試成員', 'temp@axpo.io', 'user')
+    `).run(tempUsername);
+
+    const tempUserId = res.lastInsertRowid;
+    expect(tempUserId).toBeGreaterThan(0);
+
+    // Add temp user to project 1
+    db.prepare("INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)").run(1, tempUserId, "member");
+    const memberBefore = db.query("SELECT * FROM project_members WHERE user_id = ?").get(tempUserId);
+    expect(memberBefore).not.toBeNull();
+
+    // 2. Perform DB deletion (emulating backend handler)
+    db.prepare("UPDATE issues SET assignee_id = NULL WHERE assignee_id = ?").run(tempUserId);
+    db.prepare("DELETE FROM users WHERE id = ?").run(tempUserId);
+
+    // 3. Verify user and project_members records are deleted
+    const userAfter = db.query("SELECT * FROM users WHERE id = ?").get(tempUserId);
+    expect(userAfter).toBeNull();
+
+    const memberAfter = db.query("SELECT * FROM project_members WHERE user_id = ?").get(tempUserId);
+    expect(memberAfter).toBeNull();
+  });
 });

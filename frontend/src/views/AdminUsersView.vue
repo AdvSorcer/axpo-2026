@@ -81,9 +81,32 @@
         </n-form-item>
       </n-form>
       <template #footer>
-        <div style="display: flex; justify-content: flex-end; gap: 12px;">
-          <n-button @click="showEditModal = false">取消</n-button>
-          <n-button type="primary" :loading="submittingEdit" @click="handleUpdateUser">儲存變更</n-button>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <n-popconfirm
+            v-if="editUserForm && editUserForm.id !== authStore.user?.id"
+            @positive-click="handleDeleteUser"
+            positive-text="確定刪除"
+            negative-text="取消"
+          >
+            <template #trigger>
+              <n-button type="error" secondary :loading="deletingUser">
+                🗑️ 刪除成員
+              </n-button>
+            </template>
+            確定要刪除成員「{{ editUserForm.name }}」嗎？此操作無法復原。
+          </n-popconfirm>
+          <n-tooltip v-else-if="editUserForm" trigger="hover">
+            <template #trigger>
+              <n-button type="error" secondary disabled>
+                🗑️ 刪除成員
+              </n-button>
+            </template>
+            無法刪除您自己目前的管理員帳號
+          </n-tooltip>
+          <div style="display: flex; gap: 12px;">
+            <n-button @click="showEditModal = false">取消</n-button>
+            <n-button type="primary" :loading="submittingEdit" @click="handleUpdateUser">儲存變更</n-button>
+          </div>
         </div>
       </template>
     </n-modal>
@@ -92,16 +115,19 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { NButton, NSpin, NModal, NForm, NFormItem, NInput, NSelect, useMessage } from 'naive-ui'
+import { NButton, NSpin, NModal, NForm, NFormItem, NInput, NSelect, NPopconfirm, NTooltip, useMessage } from 'naive-ui'
 import axios from 'axios'
+import { useAuthStore } from '../stores/auth'
 
 const message = useMessage()
+const authStore = useAuthStore()
 const loading = ref(false)
 const users = ref<any[]>([])
 const showModal = ref(false)
 const showEditModal = ref(false)
 const submitting = ref(false)
 const submittingEdit = ref(false)
+const deletingUser = ref(false)
 
 const userForm = ref({
   username: '',
@@ -175,6 +201,29 @@ async function handleUpdateUser() {
     message.error('更新成員失敗')
   } finally {
     submittingEdit.value = false
+  }
+}
+
+async function handleDeleteUser() {
+  if (!editUserForm.value) return
+  if (editUserForm.value.id === authStore.user?.id) {
+    message.error('無法刪除目前正在使用的管理員帳號')
+    return
+  }
+  deletingUser.value = true
+  try {
+    const res = await axios.delete(`/api/users/${editUserForm.value.id}`)
+    if (res.data.success) {
+      message.success('成員帳號已成功刪除！')
+      showEditModal.value = false
+      fetchUsers()
+    } else {
+      message.error(res.data.message || '刪除成員失敗')
+    }
+  } catch (err: any) {
+    message.error(err.response?.data?.message || '刪除成員失敗')
+  } finally {
+    deletingUser.value = false
   }
 }
 
